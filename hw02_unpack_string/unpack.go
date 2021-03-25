@@ -2,8 +2,8 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"strings"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -11,10 +11,10 @@ var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(str string) (string, error) {
 	var b strings.Builder
-	var pc rune;	// previous character
+	var pc rune // previous character
 
 	for _, c := range str {
-		if (pc == 0) {
+		if pc == 0 {
 			if unicode.IsDigit(c) {
 				return "", ErrInvalidString
 			}
@@ -37,4 +37,3 @@ func Unpack(str string) (string, error) {
 
 	return b.String(), nil
 }
-
