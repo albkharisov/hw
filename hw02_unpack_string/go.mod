@@ -1,4 +1,4 @@
-module github.com/albkharisov/hw/hw02_unpack_string
+module github.com/albkharisov/hw02_unpack_string
 replace github.com/albkharisov/hw02_unpack_string => github.com/albkharisov/hw/hw02_unpack_string
 
 go 1.16
