@@ -78,7 +78,7 @@ func (c *lruCache) Clear() {
 	c.queue.Clear()
 }
 
-/* Used for a debug */
+/* Used for a debug. */
 func (c *lruCache) PrintCache() {
 	c.lock.RLock()
 	defer c.lock.RUnlock()

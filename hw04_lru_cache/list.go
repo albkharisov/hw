@@ -43,7 +43,6 @@ func (l list) Back() *ListItem {
 }
 
 func (l *list) unlink(li *ListItem) {
-
 	if li.Prev != nil {
 		li.Prev.Next = li.Next
 	} else {
