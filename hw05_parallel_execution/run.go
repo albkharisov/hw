@@ -2,7 +2,6 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -33,13 +32,6 @@ func min(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func log(str string) {
-	a := 0
-	if a > 0 {
-		fmt.Println(str)
-	}
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
