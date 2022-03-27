@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 var (
@@ -16,7 +17,22 @@ func init() {
 	flag.Int64Var(&offset, "offset", 0, "offset in input file")
 }
 
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("\tcopy_file -from <input_file> -to <output_file> -limit <limit> -offset <offset>")
+}
+
 func main() {
 	flag.Parse()
-	// Place your code here.
+
+	if from == "" || to == "" {
+		printUsage()
+		return
+	}
+
+	err := Copy(from, to, offset, limit)
+
+	if err != nil {
+		fmt.Println("Copying failed: ", err)
+	}
 }
