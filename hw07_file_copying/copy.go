@@ -17,14 +17,12 @@ var (
 func min(a, b int64) int64 {
 	if a > b {
 		return b
-	} else {
-		return a
 	}
+	return a
 
 }
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-
 	// check we don't write into irregular file
 	fi, err := os.Stat(toPath)
 	if err == nil {
