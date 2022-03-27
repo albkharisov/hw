@@ -1,10 +1,11 @@
 package main
 
 import (
-	pb3 "github.com/cheggaaa/pb/v3"
-	"github.com/pkg/errors"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -19,7 +20,6 @@ func min(a, b int64) int64 {
 		return b
 	}
 	return a
-
 }
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
@@ -70,7 +70,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	} else {
 		copySize = min(fi.Size()-offset, limit)
 	}
-	progbar := pb3.New64(copySize)
+	progbar := pb.New64(copySize)
 	fileFrom.Seek(offset, io.SeekStart)
 	proxyReader := progbar.NewProxyReader(fileFrom)
 
@@ -78,7 +78,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	_, err = io.CopyN(fileTo, proxyReader, copySize)
 	progbar.Finish()
 
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return nil
 	}
 	return err

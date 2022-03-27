@@ -27,7 +27,6 @@ func tearDown(dirname string) {
 }
 
 func TestCopy(t *testing.T) {
-
 	t.Run("unsupported file", func(t *testing.T) {
 		testDir := setUp()
 		defer tearDown(testDir)
