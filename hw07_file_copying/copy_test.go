@@ -1,81 +1,78 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func setUp() (dirname string) {
+type CopyTestSuite struct {
+	suite.Suite
+	testDir string
+}
+
+func (s *CopyTestSuite) SetupTest() {
 	var err error
-	dirname, err = os.MkdirTemp("", "*")
+	s.testDir, err = os.MkdirTemp("", "*")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (s *CopyTestSuite) TearDownTest() {
+	os.RemoveAll(s.testDir)
+}
+
+func (s *CopyTestSuite) TestUnsupportedFile() {
+	srcFileName := "/dev/urandom"
+	dstFileName := filepath.Join(s.testDir, "file")
+
+	err := Copy(".", dstFileName, 0, 0)
+	s.Require().Equal(err, ErrUnsupportedFile)
+
+	err = Copy(srcFileName, dstFileName, 0, 0)
+	s.Require().Equal(err, ErrUnsupportedFile)
+}
+
+func (s *CopyTestSuite) TestFileNotFound() {
+	srcFileName := filepath.Join(s.testDir, "NOT_EXISTED_FILENAME")
+	dstFileName := filepath.Join(s.testDir, "file")
+
+	err := Copy(srcFileName, dstFileName, 0, 0)
+	s.Require().Equal(err, ErrSrcFileNotFound)
+}
+
+func (s *CopyTestSuite) TestFileIsEmpty() {
+	srcFileName := filepath.Join(s.testDir, "NOT_EXISTED_FILENAME")
+	dstFileName := filepath.Join(s.testDir, "file")
+
+	_, err := os.Create(srcFileName)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("temp dirname created: ", dirname)
-
-	return
+	err = Copy(srcFileName, dstFileName, 0, 0)
+	s.Require().Equal(err, ErrFileIsEmpty)
 }
 
-func tearDown(dirname string) {
-	fmt.Println("temp dirname removed: ", dirname)
-	os.RemoveAll(dirname)
+func (s *CopyTestSuite) TestOffsetViolation() {
+	srcFileName := "testdata/input.txt"
+	dstFileName := filepath.Join(s.testDir, "out")
+
+	fi, err := os.Stat(srcFileName)
+	if err != nil {
+		panic(err)
+	}
+
+	err = Copy(srcFileName, dstFileName, fi.Size(), 0)
+	s.Require().Equal(err, ErrOffsetExceedsFileSize)
+
+	err = Copy(srcFileName, dstFileName, fi.Size()+1, 0)
+	s.Require().Equal(err, ErrOffsetExceedsFileSize)
 }
 
 func TestCopy(t *testing.T) {
-	t.Run("unsupported file", func(t *testing.T) {
-		testDir := setUp()
-		defer tearDown(testDir)
-
-		dstFileName := filepath.Join(testDir, "file")
-
-		err := Copy(".", dstFileName, 0, 0)
-		require.Equal(t, err, ErrUnsupportedFile)
-		err = Copy("/dev/urandom", dstFileName, 0, 0)
-		require.Equal(t, err, ErrUnsupportedFile)
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		testDir := setUp()
-		defer tearDown(testDir)
-
-		err := Copy(filepath.Join(testDir, "NOT_EXISTED_FILENAME"), filepath.Join(testDir, "file"), 0, 0)
-		require.Equal(t, err, ErrSrcFileNotFound)
-	})
-
-	t.Run("file is empty", func(t *testing.T) {
-		testDir := setUp()
-		defer tearDown(testDir)
-
-		emptyFileName := filepath.Join(testDir, "NOT_EXISTED_FILENAME")
-
-		_, err := os.Create(emptyFileName)
-		if err != nil {
-			panic(err)
-		}
-		err = Copy(emptyFileName, filepath.Join(testDir, "file"), 0, 0)
-		require.Equal(t, err, ErrFileIsEmpty)
-	})
-
-	t.Run("offset violation", func(t *testing.T) {
-		testDir := setUp()
-		defer tearDown(testDir)
-
-		fi, err := os.Stat("testdata/input.txt")
-		if err != nil {
-			panic(err)
-		}
-
-		outFileName := filepath.Join(testDir, "out")
-
-		err = Copy("testdata/input.txt", outFileName, fi.Size(), 0)
-		require.Equal(t, err, ErrOffsetExceedsFileSize)
-
-		err = Copy("testdata/input.txt", outFileName, fi.Size()+1, 0)
-		require.Equal(t, err, ErrOffsetExceedsFileSize)
-	})
+	suite.Run(t, new(CopyTestSuite))
 }
