@@ -8,25 +8,6 @@ import (
 	"syscall"
 )
 
-//
-//func setupEnv(env []string, envMap Environment) []string {
-//
-//	ret := make([]string, len(env))
-//	copy(ret, env)
-//
-//	for i := range envMap {
-//		if envMap[i].NeedRemove {
-//			os.Unsetenv(i)
-//		} else {
-//			ret = append(ret, fmt.Sprintf("%s=%s", i, envMap[i].Value))
-//			//			os.Setenv(i, envMap[i].Value)
-//		}
-//	}
-//
-//	return ret
-//}
-//
-
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmdLine []string, env Environment) (returnCode int) {
 	//	os.Clearenv()
@@ -39,6 +20,7 @@ func RunCmd(cmdLine []string, env Environment) (returnCode int) {
 		}
 	}
 
+	// #nosec G204
 	cmd := exec.Command(cmdLine[0], (cmdLine[1:])...)
 
 	cmd.Stdout = os.Stdout
