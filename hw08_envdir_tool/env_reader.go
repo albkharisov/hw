@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,6 @@ func ReadDir(dir string) (Environment, error) {
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, errWalk error) error {
 		if errWalk != nil || !info.Mode().IsRegular() {
 			if errWalk != nil {
-				fmt.Println(errWalk)
 				return errWalk
 			}
 			return nil
@@ -65,7 +63,6 @@ func ReadDir(dir string) (Environment, error) {
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

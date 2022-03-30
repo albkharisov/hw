@@ -10,8 +10,6 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmdLine []string, env Environment) (returnCode int) {
-	//	os.Clearenv()
-
 	for i := range env {
 		if env[i].NeedRemove {
 			os.Unsetenv(i)
