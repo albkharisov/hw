@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +44,17 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in:          App{Version: "12345"},
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			in:          App{Version: "123456"},
+			expectedErr: ValidationErrors{{Field: "Version", Err: LenError}},
+		},
+		{
+			in:          App{Version: ""},
+			expectedErr: ValidationErrors{{Field: "Version", Err: LenError}},
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +62,26 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+
+			if tt.expectedErr == nil {
+				fmt.Println("expected == nil, return, Real err: ", err, ", version: ", tt.in.(App).Version)
+				require.Nil(t, err)
+				return
+			}
+
+			switch expErrs := tt.expectedErr.(type) {
+			case ValidationErrors:
+				resultErrs, ok := err.(ValidationErrors)
+				require.True(t, ok, "Expected ValidationErrors")
+				require.Equal(t, len(expErrs), len(resultErrs))
+
+				for j := range expErrs {
+					require.Equal(t, expErrs[j].Err, resultErrs[j].Err)
+				}
+			default:
+				require.Equal(t, tt.expectedErr, err)
+			}
 		})
 	}
 }
