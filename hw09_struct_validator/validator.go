@@ -9,15 +9,18 @@ import (
 	"strings"
 )
 
-var TagError = errors.New("validate tag ill-formed")
-
-// Validation errors
 var (
-	MinError    = errors.New("value is less than minimum")
-	MaxError    = errors.New("value is greater than maximum")
-	InError     = errors.New("no values match")
-	LenError    = errors.New("string len doesn't fit")
-	RegexpError = errors.New("string doesn't match regexp")
+	ErrTag        = errors.New("validate tag ill-formed")
+	ErrNotAStruct = errors.New("interface is not a structure")
+)
+
+/* Validation errors. */
+var (
+	ErrMin    = errors.New("value is less than minimum")
+	ErrMax    = errors.New("value is greater than maximum")
+	ErrIn     = errors.New("no values match")
+	ErrLen    = errors.New("string len doesn't fit")
+	ErrRegexp = errors.New("string doesn't match regexp")
 )
 
 type ValidationError struct {
@@ -37,75 +40,74 @@ func (v ValidationErrors) Error() string {
 }
 
 func ValidateInt(intValue int, tag string) error {
-	fmt.Printf("ValidateInt: '%v', tag: '%v'\n", intValue, tag)
-
 	args := strings.FieldsFunc(tag, func(r rune) bool { return r == ':' })
 	if len(args) != 2 {
-		return TagError
+		return ErrTag
 	}
 
 	switch {
 	case args[0] == "min":
 		i, err := strconv.Atoi(args[1])
 		if err != nil {
-			return TagError
+			return ErrTag
 		}
 		if i >= intValue {
-			return MinError
+			return ErrMin
 		}
 	case args[0] == "max":
 		i, err := strconv.Atoi(args[1])
 		if err != nil {
-			return TagError
+			return ErrTag
 		}
 		if i <= intValue {
-			return MaxError
+			return ErrMax
 		}
 	case args[0] == "in":
 		values := strings.FieldsFunc(args[1], func(r rune) bool { return r == ',' })
+		inValues := make([]int, 0, len(values))
 		for i := range values {
 			v, err := strconv.Atoi(values[i])
+			inValues = append(inValues, v)
 			if err != nil {
-				return TagError
+				return ErrTag
 			}
-
-			if v == intValue {
+		}
+		for i := range inValues {
+			if inValues[i] == intValue {
 				return nil
 			}
 		}
-		return InError
+		return ErrIn
 	default:
-		return TagError
+		return ErrTag
 	}
 
 	return nil
 }
 
 func ValidateString(str string, tag string) error {
-	fmt.Printf("ValidateString: '%v', tag: '%v'\n", str, tag)
-
 	args := strings.FieldsFunc(tag, func(r rune) bool { return r == ':' })
 	if len(args) != 2 {
-		return TagError
+		return ErrTag
 	}
 
 	switch {
 	case args[0] == "len":
 		i, err := strconv.Atoi(args[1])
 		if err != nil {
-			return TagError
+			return ErrTag
 		}
 		if len(str) != i {
-			return LenError
+			return ErrLen
 		}
 	case args[0] == "regexp":
 		r, err := regexp.Compile(args[1])
 		if err != nil {
-			return TagError
+			return ErrTag
 		}
 
 		if !r.MatchString(str) {
-			return RegexpError
+			return ErrRegexp
 		}
 	case args[0] == "in":
 		values := strings.FieldsFunc(args[1], func(r rune) bool { return r == ',' })
@@ -114,16 +116,15 @@ func ValidateString(str string, tag string) error {
 				return nil
 			}
 		}
-		return InError
+		return ErrIn
 	default:
-		return TagError
+		return ErrTag
 	}
 
 	return nil
 }
 
 func ValidateCondition(v reflect.Value, condition string) (err error) {
-	fmt.Println("ValidateCondition")
 	switch v.Kind() {
 	case reflect.String:
 		err = ValidateString(v.String(), condition)
@@ -136,20 +137,24 @@ func ValidateCondition(v reflect.Value, condition string) (err error) {
 				break
 			}
 		}
+	case reflect.Struct:
+		if condition == "nested" && v.CanInterface() {
+			/* Recursion */
+			err = Validate(v.Interface())
+		}
 	default:
-		panic(fmt.Errorf("not implemented tag, %T, %v", v.Kind(), v.Kind()))
+		fmt.Printf("not implemented tag: %v\n", v.Kind())
 	}
 
 	return
 }
 
 func Validate(vinterface interface{}) error {
-
 	var errorsArray ValidationErrors
 
 	v := reflect.ValueOf(vinterface)
 	if v.Kind() != reflect.Struct {
-		return errors.New("interface is not a structure")
+		return ErrNotAStruct
 	}
 
 	t := v.Type()
@@ -160,17 +165,24 @@ func Validate(vinterface interface{}) error {
 
 		validateTag, ok := ft.Tag.Lookup("validate")
 		if !ok {
-			fmt.Printf("%v: Lookup don't found 'validate' in tag: %v\n", ft.Name, ft.Tag)
 			continue
 		}
 
 		conditions := strings.FieldsFunc(validateTag, func(r rune) bool { return r == '|' })
+		if len(conditions) == 0 {
+			return ErrTag
+		}
+
 		for j := range conditions {
 			err := ValidateCondition(fv, conditions[j])
-			if err == TagError {
+
+			var errs ValidationErrors
+			switch {
+			case errors.Is(err, ErrTag):
 				return err
-			}
-			if err != nil {
+			case errors.As(err, &errs):
+				errorsArray = append(errorsArray, errs...)
+			case err != nil:
 				errorsArray = append(errorsArray, ValidationError{Err: err, Field: ft.Name})
 			}
 		}
