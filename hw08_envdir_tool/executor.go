@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
+	"syscall" //nolint:typecheck
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.

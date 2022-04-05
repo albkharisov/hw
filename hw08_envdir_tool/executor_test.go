@@ -22,8 +22,8 @@ func TestRunCmd(t *testing.T) {
 
 func (s *RunCmdTestSuite) TestExitResult() {
 	result := RunCmd([]string{"false"}, Environment{})
-	s.Require().Equal(1, result)
+	s.Require().Equal(1, result) //nolint:typecheck
 
 	result = RunCmd([]string{"true"}, Environment{})
-	s.Require().Equal(0, result)
+	s.Require().Equal(0, result) //nolint:typecheck
 }

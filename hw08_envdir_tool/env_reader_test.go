@@ -35,9 +35,9 @@ func (s *EnvTestSuite) TestDirNotExists() {
 	// create temp directory to be sure it's empty
 	_, err := ReadDir(filepath.Join(s.testDir, "not_existed_directory"))
 
-	s.Require().NotNil(err)
+	s.Require().NotNil(err) //nolint:typecheck
 	var ve *os.PathError
-	s.Require().ErrorAs(err, &ve)
+	s.Require().ErrorAs(err, &ve) //nolint:typecheck
 }
 
 func createTempDir(path string) (outName string) {
@@ -89,6 +89,6 @@ func (s *EnvTestSuite) TestAllFilesFound() {
 	count++
 
 	envmap, err := ReadDir(s.testDir)
-	s.Require().NoError(err)
-	s.Require().Equal(count, len(envmap))
+	s.Require().NoError(err)              //nolint:typecheck
+	s.Require().Equal(count, len(envmap)) //nolint:typecheck
 }
