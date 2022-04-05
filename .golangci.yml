@@ -17,7 +17,6 @@ issues:
         - dupl
         - gocyclo
         - gosec
-        - scopelint
 
 linters:
   disable-all: true
@@ -30,6 +29,7 @@ linters:
     - dupl
     - durationcheck
     - errorlint
+    - exhaustive
     - exportloopref
     - funlen
     - gci
@@ -41,32 +41,34 @@ linters:
     - gofmt
     - gofumpt
     - goheader
-    - goimports
-    - golint
-    - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ifshort
+    - importas
     - ineffassign
-    - interfacer
-    - maligned
+    - lll
+    - makezero
     - misspell
     - nestif
+    - nilerr
     - noctx
     - nolintlint
     - prealloc
     - predeclared
+    - revive
     - rowserrcheck
-    - scopelint
     - sqlclosecheck
     - staticcheck
     - structcheck
     - stylecheck
+    - tagliatelle
+    - thelper
     - typecheck
     - unconvert
     - unparam
     - unused
     - varcheck
+    - wastedassign
     - whitespace
