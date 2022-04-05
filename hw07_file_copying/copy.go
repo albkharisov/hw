@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/cheggaaa/pb/v3"
+	"github.com/cheggaaa/pb/v3" //nolint:typecheck
 	"github.com/pkg/errors"
 )
 
@@ -70,7 +70,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	} else {
 		copySize = min(fi.Size()-offset, limit)
 	}
-	progbar := pb.New64(copySize)
+	progbar := pb.New64(copySize) //nolint:typecheck
 	fileFrom.Seek(offset, io.SeekStart)
 	proxyReader := progbar.NewProxyReader(fileFrom)
 

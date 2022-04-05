@@ -30,10 +30,10 @@ func (s *CopyTestSuite) TestUnsupportedFile() {
 	dstFileName := filepath.Join(s.testDir, "file")
 
 	err := Copy(".", dstFileName, 0, 0)
-	s.Require().Equal(err, ErrUnsupportedFile)
+	s.Require().Equal(err, ErrUnsupportedFile) //nolint:typecheck
 
 	err = Copy(srcFileName, dstFileName, 0, 0)
-	s.Require().Equal(err, ErrUnsupportedFile)
+	s.Require().Equal(err, ErrUnsupportedFile) //nolint:typecheck
 }
 
 func (s *CopyTestSuite) TestFileNotFound() {
@@ -41,7 +41,7 @@ func (s *CopyTestSuite) TestFileNotFound() {
 	dstFileName := filepath.Join(s.testDir, "file")
 
 	err := Copy(srcFileName, dstFileName, 0, 0)
-	s.Require().Equal(err, ErrSrcFileNotFound)
+	s.Require().Equal(err, ErrSrcFileNotFound) //nolint:typecheck
 }
 
 func (s *CopyTestSuite) TestFileIsEmpty() {
@@ -54,7 +54,7 @@ func (s *CopyTestSuite) TestFileIsEmpty() {
 	}
 
 	err = Copy(srcFileName, dstFileName, 0, 0)
-	s.Require().Equal(err, ErrFileIsEmpty)
+	s.Require().Equal(err, ErrFileIsEmpty) //nolint:typecheck
 }
 
 func (s *CopyTestSuite) TestOffsetViolation() {
@@ -67,10 +67,10 @@ func (s *CopyTestSuite) TestOffsetViolation() {
 	}
 
 	err = Copy(srcFileName, dstFileName, fi.Size(), 0)
-	s.Require().Equal(err, ErrOffsetExceedsFileSize)
+	s.Require().Equal(err, ErrOffsetExceedsFileSize) //nolint:typecheck
 
 	err = Copy(srcFileName, dstFileName, fi.Size()+1, 0)
-	s.Require().Equal(err, ErrOffsetExceedsFileSize)
+	s.Require().Equal(err, ErrOffsetExceedsFileSize) //nolint:typecheck
 }
 
 func TestCopy(t *testing.T) {
