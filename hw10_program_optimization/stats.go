@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type User struct {
