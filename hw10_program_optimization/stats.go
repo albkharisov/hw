@@ -2,8 +2,10 @@ package hw10programoptimization
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -15,15 +17,25 @@ type User struct {
 
 type DomainStat map[string]int
 
+var (
+	ErrDomain        = errors.New("Uncorrect domain name")
+	ErrMalformedJSON = errors.New("Malformed JSON")
+)
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
+	re := regexp.MustCompile("\\A\\w+\\z")
+	if ok := re.MatchString(domain); !ok {
+		return nil, ErrDomain
+	}
+
 	var user User
 	result := make(DomainStat)
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		// no need to clear 'user' variable, because we have 1 field (TODO: test it)
+		user.Email = user.Email[:0]
 		if err := json.Unmarshal(scanner.Bytes(), &user); err != nil {
-			return nil, fmt.Errorf("unmarshal error: %w", err)
+			return nil, ErrMalformedJSON
 		}
 		if i := strings.Index(user.Email, "."+domain); i > -1 {
 			index := strings.ToLower(user.Email[strings.IndexRune(user.Email, '@')+1:])
