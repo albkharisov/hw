@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -48,30 +49,58 @@ func main() {
 }
 
 func process() {
+
 	client := NewTelnetClient(address, *timeout, os.Stdin, os.Stdout)
-	defer client.Close()
 
 	err := client.Connect()
 	if err != nil {
 		logger.Println("...Cannot connect: ", err)
 		os.Exit(1)
 	} else {
-		logger.Println("...Connected to: ", address)
+		logger.Println("...Connected to", address)
 	}
 
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
+	eof := make(chan struct{}, 1)
+	connectionClosed := make(chan struct{}, 1)
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
 	go func() {
-		client.Send()
+		if err := client.Send(); err != nil {
+			/* Graceful goroutine shutdown (using sync.WaitGroup{}) forces
+			   to show error on receiving, so comment it */
+			// logger.Printf("...Send error: %v", err)
+		}
+		eof <- struct{}{}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		if err := client.Receive(); err != nil {
+			/* Graceful goroutine shutdown (using sync.WaitGroup{}) forces
+			   to show error on receiving, so comment it */
+			// logger.Printf("...Receive error: %v", err)
+		}
+		connectionClosed <- struct{}{}
+		wg.Done()
+	}()
+
+	select {
+	case <-ctx.Done():
+		logger.Println("...Ctrl+C")
+		os.Exit(2)
+	case <-eof:
 		logger.Println("...EOF")
-		os.Exit(0)
-	}()
-
-	go func() {
-		client.Receive()
+		client.Close()
+	case <-connectionClosed:
 		logger.Println("...Server closed connection")
-		os.Exit(0)
-	}()
-
-	<-ctx.Done()
+		client.Close()
+		/* According to task: don't signal client.Send() routine about connection closing,
+		* and finish program after next sending attempt (sounds illogical).
+		* Send() routine releases sending if connection is closed. */
+	}
+	wg.Wait()
 }
