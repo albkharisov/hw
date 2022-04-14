@@ -21,6 +21,9 @@ var (
 
 var (
 	logger = log.New(os.Stderr, "", 0)
+
+	timeout *time.Duration
+	address string
 )
 
 func printUsage() {
@@ -32,23 +35,26 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
-// P.S. Do not rush to throw context down, think think if it is useful with blocking operation?
 func main() {
-	timeout := flag.Duration("timeout", time.Duration(10*time.Second), "Atata!1 Ne nado tak1")
+	timeout = flag.Duration("timeout", time.Duration(10*time.Second), "Connection establish timeout")
 	flag.Parse()
 	args := flag.Args()
 
 	if len(args) != 2 {
 		printUsage()
 	}
-	address := net.JoinHostPort(args[0], args[1])
+	address = net.JoinHostPort(args[0], args[1])
+
+	process()
+}
+
+func process() {
 
 	client := NewTelnetClient(address, *timeout, os.Stdin, os.Stdout)
-	//	defer client.Close()
 
 	err := client.Connect()
 	if err != nil {
-		logger.Printf("Cannot connect: %v", err)
+		logger.Println("...Cannot connect: ", err)
 		os.Exit(1)
 	} else {
 		logger.Println("...Connected to", address)
@@ -63,7 +69,9 @@ func main() {
 	wg.Add(1)
 	go func() {
 		if err := client.Send(); err != nil {
-			logger.Printf("Send error: %v", err)
+			/* Graceful goroutine shutdown (using sync.WaitGroup{}) forces
+			   to show error on receiving, so comment it */
+			// logger.Printf("...Send error: %v", err)
 		}
 		eof <- struct{}{}
 		wg.Done()
@@ -72,7 +80,9 @@ func main() {
 	wg.Add(1)
 	go func() {
 		if err := client.Receive(); err != nil {
-			logger.Printf("Receive error: %v", err)
+			/* Graceful goroutine shutdown (using sync.WaitGroup{}) forces
+			   to show error on receiving, so comment it */
+			// logger.Printf("...Receive error: %v", err)
 		}
 		connectionClosed <- struct{}{}
 		wg.Done()
@@ -86,10 +96,11 @@ func main() {
 		logger.Println("...EOF")
 		client.Close()
 	case <-connectionClosed:
+		logger.Println("...Server closed connection")
+		client.Close()
 		/* According to task: don't signal client.Send() routine about connection closing,
 		* and finish program after next sending attempt (sounds illogical).
-		* Send() routine releases sending if connection is closed.
-		 */
+		* Send() routine releases sending if connection is closed. */
 	}
 	wg.Wait()
 }
