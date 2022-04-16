@@ -42,12 +42,14 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return errors.Wrap(err, "Open source failed!")
 	}
+	defer fileFrom.Close()
 
 	// check destination file can be opened/created
 	fileTo, err := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.Wrap(err, "OpenFile destination failed!")
 	}
+	defer fileTo.Close()
 
 	// check source file is regular
 	if !fi.Mode().IsRegular() {
@@ -79,7 +81,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	progbar.Finish()
 
 	if errors.Is(err, io.EOF) {
-		return nil
+		// https://www.joeshaw.org/dont-defer-close-on-writable-files/
+		return fileTo.Sync()
 	}
 	return err
 }
