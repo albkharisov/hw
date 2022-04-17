@@ -95,27 +95,34 @@ func TestPipeline(t *testing.T) {
 		in := make(Bi)
 		done := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
+		const (
+			stopIndex = 2
+		)
 
-		close(done)
-
-		go func() {
+		go func(data []int) {
 			for _, v := range data {
 				in <- v
 			}
 			close(in)
-		}()
+		}(data)
 
+		time.Sleep(time.Second * 1)
+
+		i := 0
 		result := make([]int, 0, 10)
-		start := time.Now()
 		for s := range ExecutePipeline(in, done) {
+			if stopIndex == i {
+				close(done)
+			}
+			i++
 			result = append(result, s.(int))
 		}
-		elapsed := time.Since(start)
+
+		data = data[:stopIndex+1]
 
 		require.Equal(t, len(result), len(data))
 		for i := range result {
-			require.Equal(t, result[i], data[i])
+			require.Equal(t, data[i], result[i])
 		}
-		require.Less(t, int64(elapsed), int64(fault))
 	})
 }

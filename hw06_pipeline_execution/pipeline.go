@@ -17,10 +17,23 @@ func wrapChannel(in In, done In) Out {
 			select {
 			case <-done:
 				return
+			default:
+			}
+
+			select {
+			case <-done:
+				return
 			case x, ok := <-in:
 				if !ok {
 					return
 				}
+
+				select {
+				case <-done:
+					return
+				default:
+				}
+
 				select {
 				case <-done:
 					return
@@ -34,7 +47,7 @@ func wrapChannel(in In, done In) Out {
 }
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	dataCh := in
+	dataCh := wrapChannel(in, done)
 
 	for i := range stages {
 		dataCh = stages[i](wrapChannel(dataCh, done))
