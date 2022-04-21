@@ -67,10 +67,10 @@ func ValidateInt(intValue int, tag string) error {
 		inValues := make([]int, 0, len(values))
 		for i := range values {
 			v, err := strconv.Atoi(values[i])
-			inValues = append(inValues, v)
 			if err != nil {
 				return ErrTag
 			}
+			inValues = append(inValues, v)
 		}
 		for i := range inValues {
 			if inValues[i] == intValue {

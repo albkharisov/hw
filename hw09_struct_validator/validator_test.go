@@ -255,20 +255,6 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.ErrorIs(t, tt.expectedErr, err)
 			}
-
-			//			switch expErrs := tt.expectedErr.(type) {
-			//			case ValidationErrors:
-			//				resultErrs, ok := err.(ValidationErrors)
-			//				require.True(t, ok, "Expected ValidationErrors")
-			//				require.Equal(t, len(expErrs), len(resultErrs))
-			//
-			//				for j := range expErrs {
-			//					require.Equal(t, expErrs[j].Err, resultErrs[j].Err)
-			//					require.Equal(t, expErrs[j].Field, resultErrs[j].Field)
-			//				}
-			//			default:
-			//				require.Equal(t, tt.expectedErr, err)
-			//			}
 		})
 	}
 }
