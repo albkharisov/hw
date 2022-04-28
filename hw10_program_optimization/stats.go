@@ -22,8 +22,9 @@ var (
 	ErrMalformedJSON = errors.New("Malformed JSON")
 )
 
+var re = regexp.MustCompile("\\A\\w+\\z")
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	re := regexp.MustCompile("\\A\\w+\\z")
 	if ok := re.MatchString(domain); !ok {
 		return nil, ErrDomain
 	}
