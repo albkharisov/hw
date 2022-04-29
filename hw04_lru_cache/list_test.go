@@ -48,4 +48,54 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("complete clearing", func(t *testing.T) {
+		l := NewList()
+		l.PushFront(10) // [10]
+		l.PushBack(20)  // [10, 20]
+		l.Clear()
+
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
+
+	t.Run("heteromorph", func(t *testing.T) {
+		l := NewList()
+		l.PushBack(10)    // [10]
+		l.PushBack("str") // [10, "str"]
+
+		require.Equal(t, 2, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, "str", l.Back().Value)
+	})
+
+	t.Run("remove", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10) // [10]
+		l.PushBack(20)  // [10, 20]
+		l.PushBack(30)  // [10, 20, 30]
+
+		l.Remove(l.Front()) // [20, 30]
+		require.Equal(t, 2, l.Len())
+		require.Equal(t, 20, l.Front().Value.(int))
+		require.Equal(t, 30, l.Front().Next.Value.(int))
+		require.Nil(t, l.Front().Next.Next)
+		require.Equal(t, 30, l.Back().Value.(int))
+		require.Equal(t, 20, l.Back().Prev.Value.(int))
+		require.Nil(t, l.Back().Prev.Prev)
+
+		l.Remove(l.Back()) // [20]
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, 20, l.Front().Value.(int))
+		require.Nil(t, l.Front().Next)
+		require.Equal(t, 20, l.Back().Value.(int))
+		require.Nil(t, l.Back().Prev)
+
+		l.Remove(l.Back()) // []
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
 }
