@@ -1,4 +1,4 @@
-// +build !bench
+//go:build !bench
 
 package hw10programoptimization
 
@@ -35,5 +35,65 @@ func TestGetDomainStat(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "unknown")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("find empty domain name", func(t *testing.T) {
+		_, err := GetDomainStat(bytes.NewBufferString(data), "")
+		require.Equal(t, ErrDomain, err)
+	})
+
+	t.Run("find uncorrect domain name", func(t *testing.T) {
+		_, err := GetDomainStat(bytes.NewBufferString(data), "broWsecat.com")
+		require.Equal(t, ErrDomain, err)
+	})
+}
+
+func TestGetDomainStatErrors(t *testing.T) {
+	dataNoEmailField := `{"Id":1,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@def.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+{"Id":2,"Name":"Howard Mendoza","Username":"0Oliver","mail":"abc@def.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}
+{"Id":3,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@hjk.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+{"Id":4,"Name":"Howard Mendoza","Username":"0Oliver","mail":"abc@def.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
+	dataEmptyEmailField := `{"Id":1,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@def.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+{"Id":2,"Name":"Howard Mendoza","Username":"0Oliver","Email":"","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}
+{"Id":3,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@hjk.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+{"Id":4,"Name":"Howard Mendoza","Username":"0Oliver","Email":"","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
+
+	t.Run("parse JSON with some 'Email' fields missing", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(dataNoEmailField), "gov")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{
+			"def.gov": 1,
+			"hjk.gov": 1,
+		}, result)
+	})
+
+	t.Run("parse JSON with empty 'Email fields'", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(dataEmptyEmailField), "gov")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{
+			"def.gov": 1,
+			"hjk.gov": 1,
+		}, result)
+	})
+}
+
+func TestGetDomainStatJSONmalformed(t *testing.T) {
+	dataJSONemptyLines := `{"Id":1,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@def.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+
+
+{"Id":3,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@hjk.com","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+{"Id":4,"Name":"Howard Mendoza","Username":"0Oliver","Email":"abc@def.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
+	dataMalformedJSON := `{"Id":1,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@def.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+	{"Id":3,"Name":"Janice Rose","Username":"KeithHart","Email":"abc@hjk.gov","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}
+	"Id":4,"Name":"Howard Mendoza","Username":"0Oliver","mail":"abc@def.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
+
+	t.Run("parse JSON with empty lines", func(t *testing.T) {
+		_, err := GetDomainStat(bytes.NewBufferString(dataJSONemptyLines), "gov")
+		require.Equal(t, ErrMalformedJSON, err)
+	})
+
+	t.Run("parse malformed JSON", func(t *testing.T) {
+		_, err := GetDomainStat(bytes.NewBufferString(dataMalformedJSON), "gov")
+		require.Equal(t, ErrMalformedJSON, err)
 	})
 }
